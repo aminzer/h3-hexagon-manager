@@ -3,8 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-createRoot(document.getElementById('root')!).render(
+const reactRootElement = document.getElementById('root');
+
+if (!reactRootElement) {
+  throw new Error('Failed to boot application');
+}
+
+createRoot(reactRootElement).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);
