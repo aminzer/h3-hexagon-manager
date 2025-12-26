@@ -5,10 +5,10 @@ import { PolygonLayer } from '@deck.gl/layers';
 import { latLngToCell, cellToBoundary } from 'h3-js';
 import { useLoadGoogleMapsApi } from './googleMaps';
 import ukAreasGeoJson from './assets/uk-areas-geojson.json';
-import { getGeoJsonAreas, type GeoJson } from './geoJson';
-import type { MapArea } from './types';
+import { getGeoJsonPolygonAreas, type GeoJson } from './geoJson';
+import type { PolygonArea } from './types';
 
-const ukAreas = getGeoJsonAreas(ukAreasGeoJson as GeoJson);
+const ukAreas = getGeoJsonPolygonAreas(ukAreasGeoJson as GeoJson);
 
 function App() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -30,25 +30,25 @@ function App() {
 
     const overlay = new GoogleMapsOverlay({
       layers: [
-        new PolygonLayer<MapArea>({
+        new PolygonLayer<PolygonArea>({
           id: 'deck-polygons',
           data: ukAreas,
           pickable: true,
           stroked: true,
           filled: true,
           extruded: false,
-          getPolygon: (d: MapArea) => d.polygon,
+          getPolygon: (area: PolygonArea) => [area.polygon, ...(area.exclusionPolygons ?? [])],
           getFillColor: [0, 120, 255, 80],
           getLineColor: [0, 0, 0, 200],
           lineWidthMinPixels: 1,
           onClick: (info) => {
-            const obj = info.object as MapArea | null;
+            const obj = info.object as PolygonArea | null;
             if (obj) {
               console.log('Polygon clicked:', obj.id, obj.name);
             }
           },
           onHover: (info) => {
-            const obj = info.object as MapArea | null;
+            const obj = info.object as PolygonArea | null;
             if (obj) {
               console.log('Hover polygon:', obj.id);
             }

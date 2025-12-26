@@ -1,10 +1,9 @@
 export interface GeoJsonFeature {
   properties: {
-    NAME_2?: string;
-    NAME_1?: string;
-    NAME?: string;
-    GID_2?: string;
-    GID_1?: string;
+    NAME_1?: string | null;
+    NAME_2?: string | null;
+    GID_1?: string | null;
+    GID_2?: string | null;
   };
   geometry: {
     type: string;
