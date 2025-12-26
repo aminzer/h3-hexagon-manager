@@ -7,6 +7,7 @@ import { useLoadGoogleMapsApi } from './googleMaps';
 import ukAreasGeoJson from './assets/uk-areas-geojson.json';
 import { getGeoJsonPolygonAreas, type GeoJson } from './geoJson';
 import type { PolygonArea } from './types';
+import { stringToRGBColorArray } from './utils/colors';
 
 const ukAreas = getGeoJsonPolygonAreas(ukAreasGeoJson as GeoJson);
 
@@ -38,7 +39,7 @@ function App() {
           filled: true,
           extruded: false,
           getPolygon: (area: PolygonArea) => [area.polygon, ...(area.exclusionPolygons ?? [])],
-          getFillColor: [0, 120, 255, 80],
+          getFillColor: (area: PolygonArea) => [...stringToRGBColorArray(area.id), 80],
           getLineColor: [0, 0, 0, 200],
           lineWidthMinPixels: 1,
           onClick: (info) => {
