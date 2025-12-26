@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import './App.css';
-// import { GoogleMapsOverlay } from '@deck.gl/google-maps';
-// import { ScatterplotLayer } from '@deck.gl/layers';
+import { GoogleMapsOverlay } from '@deck.gl/google-maps';
+import { PolygonLayer } from '@deck.gl/layers';
 import { latLngToCell, cellToBoundary } from 'h3-js';
 import { useLoadGoogleMapsApi } from './googleMaps';
+import ukAreas from './resources/uk_areas.json';
 
 function App() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -23,18 +24,87 @@ function App() {
       disableDefaultUI: true,
     });
 
-    // const overlay = new GoogleMapsOverlay({
-    //   layers: [
-    //     new ScatterplotLayer({
-    //       id: 'scatter-1',
-    //       data: [{ position: [-0.1278, 51.5074], size: 1000 }],
-    //       getPosition: (d: { position: [number, number]; size: number }) => d.position,
-    //       getFillColor: [255, 0, 0, 100],
-    //       getRadius: (d: { position: [number, number]; size: number }) => d.size,
-    //     }),
-    //   ],
-    // });
-    // overlay.setMap(map.current);
+    type GeoFeature = {
+      properties: {
+        NAME_2?: string;
+        NAME_1?: string;
+        NAME?: string;
+        GID_2?: string;
+        GID_1?: string;
+      };
+      geometry: {
+        type: string;
+        coordinates: unknown;
+      };
+    };
+    type UkGeo = { features: GeoFeature[] };
+    type PolygonEntry = { id: string; regionName: string; polygon: [number, number][][] };
+
+    const features = (ukAreas as UkGeo).features;
+
+    const polygonsData: PolygonEntry[] = features.flatMap((feature, featureIndex) => {
+      console.log(feature);
+      const regionName =
+        feature.properties.NAME_2 ||
+        feature.properties.NAME_1 ||
+        feature.properties.NAME ||
+        String(feature.properties.GID_2 || feature.properties.GID_1 || featureIndex);
+      const geomType = feature.geometry.type;
+      const coords = feature.geometry.coordinates;
+
+      if (geomType === 'Polygon') {
+        return [
+          {
+            id: `${regionName}_${String(featureIndex)}_0`,
+            regionName,
+            polygon: coords as [number, number][][],
+          },
+        ];
+      }
+
+      if (geomType === 'MultiPolygon') {
+        return (coords as [number, number][][][]).map((poly, polyIndex) => ({
+          id: `${regionName}_${String(featureIndex)}_${String(polyIndex)}`,
+          regionName,
+          polygon: poly,
+        }));
+      }
+
+      return [];
+    });
+
+    console.log(polygonsData.length);
+
+    const overlay = new GoogleMapsOverlay({
+      layers: [
+        new PolygonLayer<PolygonEntry>({
+          id: 'deck-polygons',
+          data: polygonsData,
+          pickable: true,
+          stroked: true,
+          filled: true,
+          extruded: false,
+          getPolygon: (d: PolygonEntry) => d.polygon,
+          getFillColor: [0, 120, 255, 80],
+          getLineColor: [0, 0, 0, 200],
+          lineWidthMinPixels: 1,
+          onClick: (info) => {
+            const obj = info.object as PolygonEntry | null;
+            if (obj) {
+              console.log('Polygon clicked:', obj.id, obj.regionName);
+            }
+          },
+          onHover: (info) => {
+            const obj = info.object as PolygonEntry | null;
+            if (obj) {
+              console.log('Hover polygon:', obj.id);
+            }
+          },
+        }),
+      ],
+    });
+
+    overlay.setMap(map.current);
 
     const handleClick = (e: google.maps.MapMouseEvent) => {
       const latLng = e.latLng;
