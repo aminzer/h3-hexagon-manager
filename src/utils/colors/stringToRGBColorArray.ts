@@ -1,6 +1,3 @@
-// utils/stringToColor.ts
-// Deterministic, well-distributed string → color (hex or HSL)
-
 import hslToRgb from './hslToRgb';
 
 function fnv1a32(str: string): number {
@@ -25,6 +22,11 @@ function xorshift32(seed: number) {
   };
 }
 
+/**
+ * Converts a string to a RGB color array [R, G, B] (deterministic).
+ * @param input - The input string.
+ * @returns An array containing the RGB color values.
+ */
 function stringToRGBColorArray(input: string): [number, number, number] {
   const seed = fnv1a32(input + '\x00'); // small tweak to reduce collisions
   const rand = xorshift32(seed);
